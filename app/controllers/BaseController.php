@@ -2,28 +2,19 @@
 
 namespace App\Controllers;
 
-require_once __DIR__.'/../config/constants.php';
+class BaseController {
 
-class BaseController{
+    const JSON_RESPONSE_TYPE = 'JSON';
+    const TEXT_RESPONSE_TYPE = 'TEXT';
+    const AVAILABLE_RESPONSE_TYPES = [
+        self::JSON_RESPONSE_TYPE,
+        self::TEXT_RESPONSE_TYPE
+    ];
 
+    const CONTENT_TYPES = [
+        self::JSON_RESPONSE_TYPE => 'application/json',
+        self::TEXT_RESPONSE_TYPE => 'text/plain'
+    ];
 
-    public function getRequest(){
-        header('Content-Type: application/json');
-        $content = trim(file_get_contents("php://input"));
-        $decoded = json_decode($content, true);
-        return $decoded;
-    }
-
-
-    public function httpResponse($code, $message, $data){
-        http_response_code($code);
-        $response = [
-            'status' => $code,
-            'message' => $message,
-            'data' => $data
-        ];
-        echo json_encode($response);
-        die();
-    }
-
+    const INVALID_RESPONSE_TYPE = 'Invalid response type';
 }

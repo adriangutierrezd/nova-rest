@@ -1,6 +1,8 @@
 <?php
 
 namespace libs;
+use App\Controllers\ResponseController;
+
 class Route{    
 
     private static $routes = [];
@@ -20,20 +22,35 @@ class Route{
     public static function put($uri, $callback){
         self::$routes['PUT'][$uri] = $callback;
     }
-
+    
     public static function dispatch($uri, $method){
 
+        $targetRoutes = self::$routes[$method] ?? [];
+
         $GLOBALS['matches'] = [];
-        $matchRoutes = array_filter(self::$routes[$method], function($route) use ($uri){
-            if(strpos($route, ':')) $route = preg_replace('#:([a-zA-Z0-9]+)#', '([a-zA-Z0-9]+)', $route);
-            $res = preg_match("#^$route$#", $uri, $matches);
-            if($res) $GLOBALS['matches'] = $matches;
-            return $res;
-        }, ARRAY_FILTER_USE_KEY);
+        $matchRoutes = self::getRoutesMatches($uri, $method);
 
         if(count($matchRoutes) === 0){
-            echo "No se ha encontrado la ruta $uri";
-            return;
+
+            $httpMethods = array_keys(self::$routes);
+            $otherMethodMatches = [];
+            foreach($httpMethods as $httpMethod){
+
+                if($httpMethod === $method) continue;
+
+                $matchesRoutes = self::getRoutesMatches($uri, $httpMethod);
+                if(count($matchesRoutes) > 0) $otherMethodMatches[$httpMethod] = self::getRoutesMatches($uri, $httpMethod);
+                
+            }
+
+            $responseController = new ResponseController();
+
+            if(count($otherMethodMatches) > 0){
+                $responseController->httpResponse(HTTP_CODE_METHOD_NOT_ALLOWED, 'Method not allowed', ['allowedMethods' => array_keys($otherMethodMatches)]);
+            }else{
+                $responseController->httpResponse(HTTP_CODE_NOT_FOUND, 'Not found', []);
+            }
+
         }else{
             $callback = end($matchRoutes);
             $controller = $callback[0];
@@ -44,5 +61,20 @@ class Route{
 
 
     }
+
+    private static function getRoutesMatches($uri, $method){
+        $targetRoutes = self::$routes[$method] ?? [];
+
+        $GLOBALS['matches'] = [];
+        $matchRoutes = array_filter($targetRoutes, function($route) use ($uri){
+            if(strpos($route, ':')) $route = preg_replace('#:([a-zA-Z0-9]+)#', '([a-zA-Z0-9]+)', $route);
+            $res = preg_match("#^$route$#", $uri, $matches);
+            if($res) $GLOBALS['matches'] = $matches;
+            return $res;
+        }, ARRAY_FILTER_USE_KEY);
+
+        return $matchRoutes;
+    }
+
 
 }
