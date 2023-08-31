@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__.'/../../app/config/constants.php';
+
 use libs\Route;
 use App\Controllers\BaseController;
 use App\Controllers\TokenController;

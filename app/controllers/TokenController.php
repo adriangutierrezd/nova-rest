@@ -9,7 +9,6 @@ use Dotenv;
 use Exception;
 use stdClass;
 
-require_once __DIR__.'/../config/constants.php';
 
 class TokenController {
 
